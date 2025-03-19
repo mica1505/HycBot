@@ -1,0 +1,14 @@
+libcamera-still -t 3000
+ip = hostname -I
+ssh hycbot@ip
+mp = Camelia
+source raspatank/bin/activate
+
+gst-launch-1.0 videotestsrc ! videoconvert ! autovideosink
+gst-launch-1.0 videotestsrc ! videoconvert ! xvimagesink
+sudo systemctl restart pigpiod
+
+ip:8000/video_feed
+
+
+sudo python -m src.features.
