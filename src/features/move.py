@@ -31,6 +31,7 @@ def move(direction):
             GPIO.output(MOTOR_PINS['A']['pin2'], False)
             GPIO.output(MOTOR_PINS['B']['pin1'], False)
             GPIO.output(MOTOR_PINS['B']['pin2'], True)
+
         else:
             stop()
 
