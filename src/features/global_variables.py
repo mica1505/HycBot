@@ -11,3 +11,9 @@ LED_DMA = 10          # DMA channel to use for generating signal
 LED_BRIGHTNESS = 255  # Brightness (0-255)
 LED_INVERT = False    # True to invert the signal
 LED_CHANNEL = 0       # Set to '1' for GPIOs 13, 19, 41, 45, or 53
+
+SENSOR_LEFT = 38
+SENSOR_MIDDLE = 36
+SENSOR_RIGHT = 35
+
+IR_RECEIVER = 15

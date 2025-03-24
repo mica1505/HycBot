@@ -4,9 +4,7 @@ ssh hycbot@ip
 mp = Camelia
 source raspatank/bin/activate
 
-gst-launch-1.0 videotestsrc ! videoconvert ! autovideosink
-gst-launch-1.0 videotestsrc ! videoconvert ! xvimagesink
-sudo systemctl restart pigpiod
+sudo python -m src.manette.receive_commands_yanis
 
 ip:8000/video_feed
 
