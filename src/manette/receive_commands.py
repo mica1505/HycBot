@@ -1,67 +1,81 @@
+import RPi.GPIO as GPIO
 import socket
+import time
+from rpi_ws281x import Color
+
+from src.features.led import enableLED, disableLED  # Import LED functions
 from src.features.move import move, stop  # Import motor functions
 from src.features.infra_shot_test import send_shot
-import time
-# Parametres reseau
+
+# Configuration du socket UDP
 PORT = 5005
 BUFFER_SIZE = 1024
 
-# Initialisation du socket UDP
+# Assurez-vous que l'IP du Raspberry Pi correspond à celle utilisée dans le premier script
+RASPBERRY_IP = "192.168.0.133"
+
+# Initialisation du socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind(("0.0.0.0", PORT))
+sock.bind((RASPBERRY_IP, PORT))
 
-print(f"Serveur en attente sur le port {PORT}...")
-movement = None
-while True:
-    data, addr = sock.recvfrom(BUFFER_SIZE)
-    message = data.decode()
-    print("1",message)
-   
-    if message == "None":
-        print("Aucun bouton press")
-    #     continue
+led_on = False  # État des LEDs
+movement = None  # Stocke le mouvement en cours
 
-    boutons = list(map(int, message.split(",")))
-    print(f"Boutons presss : {boutons}")
-    if boutons:
-        # Exemple d?actions
-        if 0 ==boutons[-1]:  # Supposons que le bouton 0 allume un moteur
-            move("backward")
-            movement="backward"
-        elif 1 ==boutons[-1]:  # Supposons que le bouton 1 recule
-            move("right")
-            movement="right"
-        elif 2 ==boutons[-1]:  # Supposons que le bouton 2 tourne  gauche
-            move("left")
-            movement="left"
-        elif 3 ==boutons[-1]:  # Supposons que le bouton 3 tourne  droite
-            move("forward")
-            movement="forward"
-        elif 9 ==boutons[-1]:  # Supposons que le bouton 9 arrte tout
-            send_shot()
-        elif 10 ==boutons[-1]:
-            send_shot()
+# Mappage des boutons de la manette vers les actions
+BUTTON_MAP = {
+    3: "forward",   # Exemple : bouton A (selon la manette)
+    0: "backward",  # Exemple : bouton B
+    2: "left",      # Exemple : bouton X
+    1: "right",     # Exemple : bouton Y
+    4: "led",       # Exemple : bouton L1 pour LED
+    9: "shoot"      # Exemple : bouton R1 pour tir
+}
 
-        time.sleep(1)
-        if movement:
-            stop()
-            movement= None
+try:
+    print("Attente des commandes de la manette...")
+    while True:
+        data, addr = sock.recvfrom(BUFFER_SIZE)
+        message = data.decode().strip()
+        print(message)
+        if message == "99":
+            if movement:
+                print("stop")
+                stop()
+                movement = None
+            continue
+        
+        buttons_pressed = list(map(int, message.split(",")))
+        
+        for button in buttons_pressed:
+            action = BUTTON_MAP.get(button)
+            if action == "forward" and movement != "forward":
+                move("forward")
+                movement = "forward"
+            elif action == "backward" and movement != "backward":
+                move("backward")
+                movement = "backward"
+            elif action == "left" and movement != "left":
+                move("left")
+                movement = "left"
+            elif action == "right" and movement != "right":
+                move("right")
+                movement = "right"
+            elif action == "led":
+                led_on = not led_on
+                if led_on:
+                    enableLED(Color(0, 255, 0))
+                else:
+                    disableLED()
+            elif action == "shoot":
+                send_shot()
+        
+        time.sleep(0.05)  # Réduction de la charge CPU
 
-    # TODO : Ajouter la gestion des moteurs ici
-    # Exemple : si bouton[0] == 1 ? arreter les moteurs
+except KeyboardInterrupt:
+    print("Arrêt du programme")
 
-
-"""
-        # Exemple d?actions
-        if 0 or 12 ==boutons[-1]:  # Supposons que le bouton 0 allume un moteur
-            print("? down")
-        if 1 or 14 ==boutons[-1]:  # Supposons que le bouton 1 recule
-            print("? droite")
-        if 2 or 13 ==boutons[-1]:  # Supposons que le bouton 2 tourne  gauche
-            print("? Tourner gauche")
-        if 3 or 11 ==boutons[-1]:  # Supposons que le bouton 3 tourne  droite
-            print("? UP")
-        if 9 ==boutons[-1]:  # Supposons que le bouton 9 arrte tout
-            print("? Arrt d'urgence !") 
-"""
-
+finally:
+    stop()
+    disableLED()
+    GPIO.cleanup()
+    sock.close()
