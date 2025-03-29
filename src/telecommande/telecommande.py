@@ -26,14 +26,14 @@ class Telecommande:
         GPIO.setwarnings(False)  # Disable warnings
         GPIO.setmode(GPIO.BOARD)  # Set GPIO pin numbering mode
 
-        #self.led_controller = LEDController()
+        self.led_controller = LEDController()
         self.motor_controller = MotorController()
-        #self.shot_controller = ShotController()
-        #self.sensor_controller = SensorController()
-        #self.shot_detector = ShotDetector() 
-        #self.camera = Camera()
+        self.shot_controller = ShotController()
+        self.sensor_controller = SensorController()
+        self.shot_detector = ShotDetector() 
+        self.camera = Camera()
 
-        #elf.client = Client()
+        self.client = Client()
         time.sleep(5) #make sur all communication are done with the server befaure procedding  
         # self.led_controller.enable_led() #TODO : it more paractical to loop until we are asigned a team instead os just sleep 
         # self.led_controller.disable_led()
@@ -43,20 +43,20 @@ class Telecommande:
 
         
         # Start sensor detection in a separate thread
-        #self.sensor_thread = threading.Thread(target=self.sensor_controller.detect_transition_zone, daemon=True)
-        #self.sensor_thread.start()
+        self.sensor_thread = threading.Thread(target=self.sensor_controller.detect_transition_zone, daemon=True)
+        self.sensor_thread.start()
 
         # Start shot detector in a separate thread
         #self.shot_detector_thread = threading.Thread(target=self.shot_detector.detect_shot, daemon=True)
         #self.shot_detector_thread.start()
 
         # Start camera capture in a separate thread
-        #self.camera_thread = threading.Thread(target=self.camera.capture_frames, daemon=True)
-        #self.camera_thread.start()
+        self.camera_thread = threading.Thread(target=self.camera.capture_frames, daemon=True)
+        self.camera_thread.start()
 
         # Start Flask server in a separate thread without showing output in terminal
-        #self.flask_thread = threading.Thread(target=self.run_flask, daemon=True)
-        #self.flask_thread.start()
+        self.flask_thread = threading.Thread(target=self.run_flask, daemon=True)
+        self.flask_thread.start()
 
     def run_flask(self):
         """Run the Flask app without blocking the terminal."""
@@ -66,7 +66,7 @@ class Telecommande:
         stdscr.nodelay(True)  # Non-blocking input
         stdscr.clear()
         stdscr.addstr("Use arrow keys to move. Press 'L' to toggle LEDs. Press 'Q' to quit.\n")
-        movement = None
+        #movement = None
 
         PORT = 5005
         BUFFER_SIZE = 1024
@@ -94,6 +94,7 @@ class Telecommande:
         try:
             print("Attente des commandes de la manette...")
             while True:
+                print("je suis dans la boucele")
                 data, addr = sock.recvfrom(BUFFER_SIZE)
                 message = data.decode().strip()
                 print(message)
@@ -138,7 +139,7 @@ class Telecommande:
         finally:
             stdscr.addstr("Cleaning up GPIO...\n")
             self.motor_controller.stop()
-            #self.led_controller.disable_led()
+            self.led_controller.disable_led()
             GPIO.cleanup()
 
 if __name__ == "__main__":
