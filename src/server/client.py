@@ -2,58 +2,95 @@ import paho.mqtt.client as mqtt
 import time
 import uuid
 
-# MQTT Broker settings
-BROKER = "192.168.0.125"  # Make sure this is the correct IP of the broker
-PORT = 1883  # Default MQTT port
-TOPIC = "init"
+from rpi_ws281x import Color
+from src.server.constantes import BROKER, PORT
 
-# This will store the client ID, which we can modify to simulate a unique participant
-client_id = str(uuid.getnode())
+class Client:
+    def __init__(self):
+        self.client_id = str(hex(uuid.getnode()))
+        print(f"Client ID: {self.client_id}")
+        
+        self.client = mqtt.Client(self.client_id)
+        self.client.on_message = self.on_message  # Set the callback for received messages
+        
+        self.connect()
+        self.subscribe_topics()
+        self.send_init_message()
 
-print(client_id)
+        self.team = None
+        self.qr_code = None
 
-# The callback function when a message is received
-def on_message(client, userdata, message):
-    print(f"Received message: {message.payload.decode('utf-8')} on topic: {message.topic}")
+        self.test = None
+        
+    def connect(self):
+        """Connect to the MQTT broker."""
+        self.client.connect(BROKER, PORT)
+        self.client.loop_start()
+        time.sleep(1)  # Ensure connection is established
+    
+    def subscribe_topics(self): 
+        """Subscribe to necessary MQTT topics."""
+        self.client.subscribe("tanks/+/init")
+    
+    def on_message(self, client, userdata, message):  #this function get executed whenever we receive a message
+        """Callback function for received messages."""
+        message_content = message.payload.decode('utf-8')
+        #print(f"Received message: {message_content} on topic: {message.topic}")
 
-# Setup the MQTT client
-client = mqtt.Client(str(client_id))
-client.on_message = on_message  # Set the callback for received messages
+        if message_content.startswith("TEAM"):
+            self.team = message_content.split(" ")[1]
 
-# Connect to the MQTT broker
-client.connect(BROKER, PORT)
+        elif message_content.startswith("QR_CODE"):
+            self.qr_code = message_content.split(" ")[1]
 
-# Subscribe to the topic to listen for messages (in case the server sends any feedback)
-client.subscribe("tanks/+/init")
+        elif message_content.startswith("SCAN_FAILED"):
+            self.test = "gferyvgerhjgkjrhgvkjhr"
 
-# Start the MQTT client loop to listen for messages
-client.loop_start()
+        
 
-# Wait for a second to ensure we're connected
-time.sleep(1)
+    
+    def send_init_message(self): 
+        """Send the INIT message to be assigned to a team."""
+        message = f"INIT {self.client_id}"
+        self.client.publish("init", message)
+        print(f"Sent INIT message: {message}")
+    
+    def notify_flag_zone(self, message):
+         """Notify when entering the flag zone."""
+         topic = f"tanks/{self.client_id}/flag"
+         self.client.publish(topic, message)
+         print(f"Message sent: {message} on topic {topic}")
+    
+    def shoot(self, shooter_id):
+         """Send a shot message."""
+         topic = f"tanks/{self.client_id}/shots"
+         message = f"SHOT_BY {shooter_id}"
+         self.client.publish(topic, message)
+         print(f"Message sent: {message} on topic {topic}")
+    
+    def qr_win_code(self, qr):
+         """Send a shot message."""
+         topic = f"tanks/{self.client_id}/qr_code"
+         message = f"QR_CODE {qr}"
+         self.client.publish(topic, message)
+         print(f"Message sent: {message} on topic {topic}")
 
-# Send the INIT message to trigger the server to assign this client to a team
-init_message = f"INIT {client_id}"  # This could be any unique identifier for the player
-client.publish(TOPIC, init_message)
-print(f"Sent INIT message: {init_message}")
+    def get_team(self):
+        """return the team of the player"""
+        if self.team == "RED":
+            return Color(255, 0, 0) 
+        if self.team == "BLUE":
+            return Color(0, 0, 255) 
+        
 
-# Publier le message lorsque le robot entre dans la zone de capture
-def notify_flag_zone(arg):
-    topic = f"tanks/{client_id}/flag"
-    message = arg
-    client.publish(topic, message)
-    print(f"Message envoyé : {message} sur le topic {topic}")
+    def get_qr_code(self):
+        """init the qr code"""
+        return self.qr_code
 
-# Publier le message lorsque le robot entre dans la zone de capture
-def shoot(arg):
-    topic = f"tanks/{client_id}/shots"
-    message = "SHOT_BY " + str(arg)
-    print(message)
-    client.publish(topic, message)
-    print(f"Message envoyé : {message} sur le topic {topic}")
-
-# Wait a bit to ensure the message is processed
-time.sleep(2)
-
-# Stop the MQTT client loop after we are done
-client.loop_stop()
+    def get_test(self):
+        """init the qr code"""
+        return self.test
+    
+    def stop(self):
+        """Stop the MQTT client loop."""
+        self.client.loop_stop()

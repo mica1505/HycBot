@@ -6,4 +6,3 @@ class ShotController:
  
     def send_shot(self):
         InfraLib.IRBlast(uuid.getnode(), "LASER")
-

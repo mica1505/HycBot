@@ -11,7 +11,8 @@ from src.features.detect_color import SensorController
 from src.features.stream_qr_code import Camera
 from src.features.detect_shot import ShotDetector
 
-import subprocess
+from src.server.client import Client
+
 
 class Telecommande:
     def __init__(self):
@@ -25,6 +26,15 @@ class Telecommande:
         self.shot_detector = ShotDetector() 
         self.camera = Camera()
 
+        self.client = Client()
+        time.sleep(5) #make sur all communication are done with the server befaure procedding  
+        self.led_controller.enable_led(self.client.get_team()) #TODO : it more paractical to loop until we are asigned a team instead os just sleep 
+        self.led_controller.disable_led()
+
+        #print("here_________",self.client.get_qr_code())
+        #print("herehreh_______",self.client.get_team())
+
+        
         # Start sensor detection in a separate thread
         self.sensor_thread = threading.Thread(target=self.sensor_controller.detect_transition_zone, daemon=True)
         self.sensor_thread.start()
@@ -52,9 +62,28 @@ class Telecommande:
         movement = None
         
         try:
-            while True:
-                key = stdscr.getch()
 
+            while True:
+                #print(self.client.get_test())
+                id_shooter = self.shot_detector.get_shot_detected()
+                if id_shooter :
+                    self.client.shoot(id_shooter)
+                    self.shot_detector.shot_detected =  None
+                
+                transition = self.sensor_controller.res
+                if transition == "🔄 Transition détectée sur Gauche: noir -> blanc":
+                    self.client.notify_flag_zone("ENTER_FLAG_AREA")
+                    self.sensor_controller.res = None
+                elif transition == "🔄 Transition détectée sur Gauche: blanc -> noir" :
+                    self.client.notify_flag_zone("EXIT_FLAG_AREA")
+                    self.sensor_controller.res = None
+
+                qr = self.camera.get_qr_code()
+                if qr :
+                    self.client.qr_win_code(qr)
+                    self.camera.qr_code = None
+
+                key = stdscr.getch()
                 # Movement controls
                 if key == curses.KEY_UP:
                     if movement != "forward":
@@ -73,15 +102,18 @@ class Telecommande:
                         self.motor_controller.move("right")
                         movement = "right"
                 elif key in [ord('l'), ord('L')]:
+                    self.led_controller = LEDController()
                     self.led_controller.enable_led(Color(0, 255, 0))
                 elif key in [ord('q'), ord('Q')]:
-                    stdscr.addstr("Exiting...\n")
+                    print("Exiting...\n")
                     self.motor_controller.stop()
                     self.led_controller.disable_led()
                     break
                 elif key in [ord('s'), ord('S')]:
-                    stdscr.addstr("Shooting...\n")
                     self.shot_controller.send_shot()
+                    self.led_controller = LEDController()
+                    self.led_controller.enable_led(self.client.get_team()) 
+                    self.led_controller.disable_led()
                 else:
                     if movement:
                         self.motor_controller.stop()

@@ -15,7 +15,7 @@ class SensorController:
         GPIO.setup(self.SENSOR_RIGHT, GPIO.IN)
         
         self.running = True  # Control flag for the thread
-        
+        self.res = None
     def read_sensors(self):
         """Read the state of the three sensors."""
         return {
@@ -33,8 +33,8 @@ class SensorController:
                 current_states = self.read_sensors()
                 for sensor in current_states.keys():
                     if current_states[sensor] != previous_states[sensor]:
-                        res = f"🔄 Transition détectée sur {sensor}: {previous_states[sensor]} -> {current_states[sensor]}"
-                        print(res)
+                        self.res = f"🔄 Transition détectée sur {sensor}: {previous_states[sensor]} -> {current_states[sensor]}"
+                        print(self.res)
                         # if res == "🔄 Transition détectée sur Gauche: noir -> blanc":
                         #     notify_flag_zone("ENTER_FLAG_AREA")
                         # elif res == "🔄 Transition détectée sur Gauche: blanc -> noir":

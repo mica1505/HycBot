@@ -5,10 +5,12 @@ import threading
 import os
 import sys
 
-#blueTeamQRCode = "0x4d61792074686520666f726365206265207769746820796f7521"
-#redTeamQRCode = "0x596f7520646f6e2774206b6e6f772074686520706f776572206f6620746865206461726b207369646521"
+from src.server.constantes import BROKER
 
-qr_codes = {"RED": "Hello_World", "BLUE": "Hello_World"}
+blueTeamQRCode = "0x4d61792074686520666f726365206265207769746820796f7521"
+redTeamQRCode = "0x596f7520646f6e2774206b6e6f772074686520706f776572206f6620746865206461726b207369646521"
+
+qr_codes = {"RED": redTeamQRCode, "BLUE": blueTeamQRCode}
 weapons = {"0xf1": "Laser Gun"}
 
 def assignToTeam(id):
@@ -53,8 +55,8 @@ def giveFlag(id, topic):
 def processData(client, userdata, message):
     global flag
     querry = str(message.payload.decode("utf-8")).split(" ")
-    print('-----------------------',message.topic[22:])
-    print(message.topic)
+    #print('-----------------------',message.topic[21:])
+    #print(message.topic)
 
     if message.topic == "init":
         if querry[0] == "INIT":
@@ -63,9 +65,9 @@ def processData(client, userdata, message):
             else:
                 client.publish("tanks/"+querry[1]+"/init", "GAME_ALREADY_STARTED")
     else:
-        participant_id = message.topic[6:21]
+        participant_id = message.topic[6:21]# [6:20]
         if participant_id in participants.keys():
-            if message.topic[22:] == "flag":
+            if message.topic[22:] == "flag": #[22:]
                 if querry[0] == "ENTER_FLAG_AREA":
                     if not any(participants[p]["flag"] for p in participants.keys()):
                         client.publish(message.topic, "START_CATCHING")
@@ -84,13 +86,13 @@ def processData(client, userdata, message):
                         client.publish(message.topic, "ABORT_CATCHING_EXIT")
                         print(participant_id + " abort catching the flag, you exited the flag area")
                         participants[participant_id]["catching"] = False
-            elif message.topic[22:] == "shots":
+            elif message.topic[22:] == "shots": #[21:]
                 print(querry[0])
                 if querry[0] == "SHOT_BY":
                     shot = querry[1][:4]
                     shooter = "0x" + querry[1][4:]
-                    print(shooter)
-                    print( participants.keys())
+                    #print(shooter)
+                    #print( participants.keys())
                     if shooter in participants.keys():
                         if participants[participant_id]["color"] != participants[shooter]["color"]:
                             client.publish(message.topic+"/in", "SHOT")
@@ -111,9 +113,11 @@ def processData(client, userdata, message):
                                 client.publish("tanks/"+shooter+"/shots/out", "FRIENDLY_FIRE")
                                 print("Carefull " + shooter + ", friendly fire")
 
-            elif message.topic[22:] == "qr_code":
+            elif message.topic[22:] == "qr_code": #[21:]
                 if querry[0] == "QR_CODE":
                     qr = querry[1]
+                    #print(qr)
+                    #qr = "0x4d61792074686520666f726365206265207769746820796f7521" blue
                     if qr == qr_codes.get(participants[participant_id]["color"]):
                         client.publish(message.topic, "SCAN_SUCCESSFUL")
                         if participants[participant_id]["flag"]:
@@ -129,7 +133,10 @@ def processData(client, userdata, message):
                             client.publish("tanks/"+participant_id+"/flag", "NO_FLAG")
                             print(participant_id + ", there is not flat to deposit")
                     else:
+                        # print("no")
                         client.publish(message.topic, "SCAN_FAILED")
+                        # client.publish("tanks/"+participant_id+"/init", "SCAN_FAILED") #faire attention  on z changer le code 
+
 
 def start_game():
     print("Welcome to World of Rasptank")
@@ -151,7 +158,7 @@ if __name__ == "__main__":
     scores = {"RED":0, "BLUE":0}
 
     client = mqtt.Client()
-    client.connect("0.0.0.0")
+    client.connect(BROKER)
 
     client.subscribe("init")
     client.subscribe("tanks/+/flag")

@@ -8,6 +8,7 @@ class LEDController:
         self.strip.begin()
         self.led_on = False
     
+    
     def color_wipe(self, color, wait_ms=50):
         for i in range(self.strip.numPixels()):
             self.strip.setPixelColor(i, color)
@@ -15,6 +16,7 @@ class LEDController:
             time.sleep(wait_ms / 1000.0)
     
     def enable_led(self, color):
+        print("color here ____", color)
         try:
             if not self.led_on:
                 print("Enabling LEDs...")
@@ -31,3 +33,4 @@ class LEDController:
         print("Disabling LEDs...")
         self.color_wipe(Color(0, 0, 0))  # Turn off all LEDs
         self.led_on = False
+
