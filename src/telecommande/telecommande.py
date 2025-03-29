@@ -16,9 +16,9 @@ from src.server.client import Client
 
 import socket
 
-from src.features.led import enableLED, disableLED  # Import LED functions
-from src.features.move import move, stop  # Import motor functions
-from features.infra_shot import send_shot
+#from src.features.led import enableLED, disableLED  # Import LED functions
+#from src.features.move import move, stop  # Import motor functions
+#from features.infra_shot import send_shot
 
 
 class Telecommande:
@@ -26,14 +26,14 @@ class Telecommande:
         GPIO.setwarnings(False)  # Disable warnings
         GPIO.setmode(GPIO.BOARD)  # Set GPIO pin numbering mode
 
-        self.led_controller = LEDController()
+        #self.led_controller = LEDController()
         self.motor_controller = MotorController()
-        self.shot_controller = ShotController()
-        self.sensor_controller = SensorController()
-        self.shot_detector = ShotDetector() 
-        self.camera = Camera()
+        #self.shot_controller = ShotController()
+        #self.sensor_controller = SensorController()
+        #self.shot_detector = ShotDetector() 
+        #self.camera = Camera()
 
-        self.client = Client()
+        #elf.client = Client()
         time.sleep(5) #make sur all communication are done with the server befaure procedding  
         # self.led_controller.enable_led() #TODO : it more paractical to loop until we are asigned a team instead os just sleep 
         # self.led_controller.disable_led()
@@ -43,20 +43,20 @@ class Telecommande:
 
         
         # Start sensor detection in a separate thread
-        self.sensor_thread = threading.Thread(target=self.sensor_controller.detect_transition_zone, daemon=True)
-        self.sensor_thread.start()
+        #self.sensor_thread = threading.Thread(target=self.sensor_controller.detect_transition_zone, daemon=True)
+        #self.sensor_thread.start()
 
         # Start shot detector in a separate thread
-        self.shot_detector_thread = threading.Thread(target=self.shot_detector.detect_shot, daemon=True)
-        self.shot_detector_thread.start()
+        #self.shot_detector_thread = threading.Thread(target=self.shot_detector.detect_shot, daemon=True)
+        #self.shot_detector_thread.start()
 
         # Start camera capture in a separate thread
-        self.camera_thread = threading.Thread(target=self.camera.capture_frames, daemon=True)
-        self.camera_thread.start()
+        #self.camera_thread = threading.Thread(target=self.camera.capture_frames, daemon=True)
+        #self.camera_thread.start()
 
         # Start Flask server in a separate thread without showing output in terminal
-        self.flask_thread = threading.Thread(target=self.run_flask, daemon=True)
-        self.flask_thread.start()
+        #self.flask_thread = threading.Thread(target=self.run_flask, daemon=True)
+        #self.flask_thread.start()
 
     def run_flask(self):
         """Run the Flask app without blocking the terminal."""
@@ -72,7 +72,7 @@ class Telecommande:
         BUFFER_SIZE = 1024
 
         # Assurez-vous que l'IP du Raspberry Pi correspond à celle utilisée dans le premier script
-        RASPBERRY_IP = "192.168.0.133"
+        RASPBERRY_IP = "192.168.1.176"
 
         # Initialisation du socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -109,25 +109,25 @@ class Telecommande:
                 for button in buttons_pressed:
                     action = BUTTON_MAP.get(button)
                     if action == "forward" and movement != "forward":
-                        move("forward")
+                        self.motor_controller.move("forward")
                         movement = "forward"
                     elif action == "backward" and movement != "backward":
-                        move("backward")
+                        self.motor_controller.move("backward")
                         movement = "backward"
                     elif action == "left" and movement != "left":
-                        move("left")
+                        self.motor_controller.move("left")
                         movement = "left"
                     elif action == "right" and movement != "right":
-                        move("right")
+                        self.motor_controller.move("right")
                         movement = "right"
-                    elif action == "led":
-                        led_on = not led_on
-                        if led_on:
-                            enableLED(Color(0, 255, 0))
-                        else:
-                            disableLED()
-                    elif action == "shoot":
-                        send_shot()
+                    #elif action == "led":
+                        #led_on = not led_on
+                        #if led_on:
+                       #     enableLED(Color(0, 255, 0))
+                      #  else:
+                     #       disableLED()
+                    #elif action == "shoot":
+                        #send_shot()
                 
                 time.sleep(0.05)
 
@@ -137,7 +137,7 @@ class Telecommande:
         finally:
             stdscr.addstr("Cleaning up GPIO...\n")
             self.motor_controller.stop()
-            self.led_controller.disable_led()
+            #self.led_controller.disable_led()
             GPIO.cleanup()
 
 if __name__ == "__main__":
