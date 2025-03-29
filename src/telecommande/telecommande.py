@@ -148,7 +148,7 @@ class Telecommande:
                             self.led_controller.disableLED()
                     elif action == "shoot":
                         self.shot_controller.send_shot()
-                        self.led_controller.enable_led(self.client.get_team()) 
+                        self.led_controller.enable_led(Color(0,0,255)) #self.client.get_team()
                         self.led_controller.disable_led()
                 time.sleep(0.05)
 
