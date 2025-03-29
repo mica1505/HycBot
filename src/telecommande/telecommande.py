@@ -88,13 +88,31 @@ class Telecommande:
             2: "left",      # Exemple : bouton X
             1: "right",     # Exemple : bouton Y
             4: "led",       # Exemple : bouton L1 pour LED
-            9: "shoot"      # Exemple : bouton R1 pour tir
+            9: "shoot",      # Exemple : bouton R1 pour tir
+            10:"shoot"
         }
 
         try:
             print("Attente des commandes de la manette...")
             while True:
-                print("je suis dans la boucele")
+                    
+                id_shooter = self.shot_detector.get_shot_detected()
+                if id_shooter :
+                    self.client.shoot(id_shooter)
+                    self.shot_detector.shot_detected =  None
+                transition = self.sensor_controller.res
+                if transition == "Transition détectée sur Gauche: noir -> blanc":
+                    self.client.notify_flag_zone("ENTER_FLAG_AREA")
+                    self.sensor_controller.res = None
+                elif transition == "Transition détectée sur Gauche: blanc -> noir" :
+                    self.client.notify_flag_zone("EXIT_FLAG_AREA")
+                    self.sensor_controller.res = None
+
+                qr = self.camera.get_qr_code()
+                if qr :
+                    self.client.qr_win_code(qr)
+                    self.camera.qr_code = None
+
                 data, addr = sock.recvfrom(BUFFER_SIZE)
                 message = data.decode().strip()
                 print(message)
@@ -122,15 +140,16 @@ class Telecommande:
                     elif action == "right" and movement != "right":
                         self.motor_controller.move("right")
                         movement = "right"
-                    # elif action == "led":
-                    #     led_on = not led_on
-                    #     if led_on:
-                    #         enableLED(Color(0, 255, 0))
-                    #     else:
-                    #         disableLED()
-                    # elif action == "shoot":
-                    #     send_shot()
-                
+                    elif action == "led":
+                        led_on = not led_on
+                        if led_on:
+                            self.led_controller.enableLED(Color(0, 255, 0))
+                        else:
+                            self.led_controller.disableLED()
+                    elif action == "shoot":
+                        self.shot_controller.send_shot()
+                        self.led_controller.enable_led(self.client.get_team()) 
+                        self.led_controller.disable_led()
                 time.sleep(0.05)
 
         except KeyboardInterrupt:
