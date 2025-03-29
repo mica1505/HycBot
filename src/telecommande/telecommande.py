@@ -36,7 +36,7 @@ class Telecommande:
         self.client = Client()
         time.sleep(5) #make sur all communication are done with the server befaure procedding  
         # self.led_controller.enable_led() #TODO : it more paractical to loop until we are asigned a team instead os just sleep 
-        # self.led_controller.disable_led()
+        self.led_controller.disable_led()
 
         #print("here_________",self.client.get_qr_code())
         #print("herehreh_______",self.client.get_team())
@@ -140,20 +140,26 @@ class Telecommande:
                     elif action == "right" and movement != "right":
                         self.motor_controller.move("right")
                         movement = "right"
+
                     elif action == "led":
                         led_on = not led_on
                         if led_on:
-                            self.led_controller.enableLED(Color(0, 255, 0))
+                            self.led_controller = LEDController()
+                            self.led_controller.enable_led((0, 255, 0))
                         else:
                             self.led_controller.disableLED()
                     elif action == "shoot":
                         self.shot_controller.send_shot()
-                        self.led_controller.enable_led(Color(0,0,255)) #self.client.get_team()
+                        self.led_controller = LEDController()
+                        self.led_controller.enable_led(Color(0,0,0)) #self.client.get_team()
                         self.led_controller.disable_led()
                 time.sleep(0.05)
 
         except KeyboardInterrupt:
             stdscr.addstr("\nKeyboard interrupt detected.\n")
+            self.motor_controller.stop()
+            self.led_controller.disable_led()
+            GPIO.cleanup()
         
         finally:
             stdscr.addstr("Cleaning up GPIO...\n")
