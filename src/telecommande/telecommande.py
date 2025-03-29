@@ -14,6 +14,13 @@ from src.features.detect_shot import ShotDetector
 from src.server.client import Client
 
 
+import socket
+
+from src.features.led import enableLED, disableLED  # Import LED functions
+from src.features.move import move, stop  # Import motor functions
+from features.infra_shot import send_shot
+
+
 class Telecommande:
     def __init__(self):
         GPIO.setwarnings(False)  # Disable warnings
@@ -28,8 +35,8 @@ class Telecommande:
 
         self.client = Client()
         time.sleep(5) #make sur all communication are done with the server befaure procedding  
-        self.led_controller.enable_led(self.client.get_team()) #TODO : it more paractical to loop until we are asigned a team instead os just sleep 
-        self.led_controller.disable_led()
+        # self.led_controller.enable_led() #TODO : it more paractical to loop until we are asigned a team instead os just sleep 
+        # self.led_controller.disable_led()
 
         #print("here_________",self.client.get_qr_code())
         #print("herehreh_______",self.client.get_team())
@@ -60,7 +67,84 @@ class Telecommande:
         stdscr.clear()
         stdscr.addstr("Use arrow keys to move. Press 'L' to toggle LEDs. Press 'Q' to quit.\n")
         movement = None
+
+        PORT = 5005
+        BUFFER_SIZE = 1024
+
+        # Assurez-vous que l'IP du Raspberry Pi correspond à celle utilisée dans le premier script
+        RASPBERRY_IP = "192.168.0.133"
+
+        # Initialisation du socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.bind((RASPBERRY_IP, PORT))
+
+        led_on = False  # État des LEDs
+        movement = None  # Stocke le mouvement en cours
+
+        # Mappage des boutons de la manette vers les actions
+        BUTTON_MAP = {
+            3: "forward",   # Exemple : bouton A (selon la manette)
+            0: "backward",  # Exemple : bouton B
+            2: "left",      # Exemple : bouton X
+            1: "right",     # Exemple : bouton Y
+            4: "led",       # Exemple : bouton L1 pour LED
+            9: "shoot"      # Exemple : bouton R1 pour tir
+        }
+
+        try:
+            print("Attente des commandes de la manette...")
+            while True:
+                data, addr = sock.recvfrom(BUFFER_SIZE)
+                message = data.decode().strip()
+                print(message)
+                if message == "99":
+                    if movement:
+                        print("stop")
+                        stop()
+                        movement = None
+                    continue
+                
+                buttons_pressed = list(map(int, message.split(",")))
+                
+                for button in buttons_pressed:
+                    action = BUTTON_MAP.get(button)
+                    if action == "forward" and movement != "forward":
+                        move("forward")
+                        movement = "forward"
+                    elif action == "backward" and movement != "backward":
+                        move("backward")
+                        movement = "backward"
+                    elif action == "left" and movement != "left":
+                        move("left")
+                        movement = "left"
+                    elif action == "right" and movement != "right":
+                        move("right")
+                        movement = "right"
+                    elif action == "led":
+                        led_on = not led_on
+                        if led_on:
+                            enableLED(Color(0, 255, 0))
+                        else:
+                            disableLED()
+                    elif action == "shoot":
+                        send_shot()
+                
+                time.sleep(0.05)
+
+        except KeyboardInterrupt:
+            stdscr.addstr("\nKeyboard interrupt detected.\n")
         
+        finally:
+            stdscr.addstr("Cleaning up GPIO...\n")
+            self.motor_controller.stop()
+            self.led_controller.disable_led()
+            GPIO.cleanup()
+
+if __name__ == "__main__":
+    telecommande = Telecommande()
+    curses.wrapper(telecommande.control_robot)
+
+"""        
         try:
 
             while True:
@@ -103,7 +187,7 @@ class Telecommande:
                         movement = "right"
                 elif key in [ord('l'), ord('L')]:
                     self.led_controller = LEDController()
-                    self.led_controller.enable_led(Color(0, 255, 0))
+                    self.led_controller.enable_led((0, 255, 0))
                 elif key in [ord('q'), ord('Q')]:
                     print("Exiting...\n")
                     self.motor_controller.stop()
@@ -120,17 +204,4 @@ class Telecommande:
                         movement = None
                 
                 time.sleep(0.05)
-
-        except KeyboardInterrupt:
-            stdscr.addstr("\nKeyboard interrupt detected.\n")
-        
-        finally:
-            stdscr.addstr("Cleaning up GPIO...\n")
-            self.motor_controller.stop()
-            self.led_controller.disable_led()
-            GPIO.cleanup()
-
-if __name__ == "__main__":
-    telecommande = Telecommande()
-    curses.wrapper(telecommande.control_robot)
-
+"""
