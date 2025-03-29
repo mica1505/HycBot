@@ -100,7 +100,7 @@ class Telecommande:
                 if message == "99":
                     if movement:
                         print("stop")
-                        stop()
+                        self.motor_controller.stop()
                         movement = None
                     continue
                 
@@ -108,6 +108,7 @@ class Telecommande:
                 
                 for button in buttons_pressed:
                     action = BUTTON_MAP.get(button)
+                    print(action)
                     if action == "forward" and movement != "forward":
                         self.motor_controller.move("forward")
                         movement = "forward"
@@ -120,14 +121,14 @@ class Telecommande:
                     elif action == "right" and movement != "right":
                         self.motor_controller.move("right")
                         movement = "right"
-                    #elif action == "led":
-                        #led_on = not led_on
-                        #if led_on:
-                       #     enableLED(Color(0, 255, 0))
-                      #  else:
-                     #       disableLED()
-                    #elif action == "shoot":
-                        #send_shot()
+                    # elif action == "led":
+                    #     led_on = not led_on
+                    #     if led_on:
+                    #         enableLED(Color(0, 255, 0))
+                    #     else:
+                    #         disableLED()
+                    # elif action == "shoot":
+                    #     send_shot()
                 
                 time.sleep(0.05)
 
