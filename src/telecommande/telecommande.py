@@ -89,7 +89,8 @@ class Telecommande:
             1: "right",     # Exemple : bouton Y
             4: "led",       # Exemple : bouton L1 pour LED
             9: "shoot",      # Exemple : bouton R1 pour tir
-            10:"shoot"
+            10:"shoot",
+            15:"end"
         }
 
         try:
@@ -145,14 +146,20 @@ class Telecommande:
                         led_on = not led_on
                         if led_on:
                             self.led_controller = LEDController()
-                            self.led_controller.enable_led((0, 255, 0))
+                            self.led_controller.enable_led(Color(0, 255, 0))
                         else:
-                            self.led_controller.disableLED()
+                            self.led_controller.disable_led()
                     elif action == "shoot":
                         self.shot_controller.send_shot()
                         self.led_controller = LEDController()
-                        self.led_controller.enable_led(Color(0,0,0)) #self.client.get_team()
+                        self.led_controller.enable_led(Color(0,255,0)) #self.client.get_team()
                         self.led_controller.disable_led()
+                        
+                    elif action == "end":
+                        print("Exiting...")
+                        self.motor_controller.stop()
+                        self.led_controller.disable_led()
+                        break
                 time.sleep(0.05)
 
         except KeyboardInterrupt:
