@@ -9,7 +9,7 @@ class ShotDetector:
         GPIO.setwarnings(False)
         if not GPIO.getmode():  # Vérifie si le mode est déjà défini
             GPIO.setmode(GPIO.BOARD)
-            
+
         GPIO.setup(IR_RECEIVER, GPIO.IN)
         self.shot_detected = None
 
@@ -24,8 +24,8 @@ class ShotDetector:
         except KeyboardInterrupt:
             print("❌ Stopping program.")
             GPIO.cleanup()
-        finally:
-            GPIO.cleanup()
+        # finally:
+        #     GPIO.cleanup()
     
     def get_shot_detected(self):
         return self.shot_detected

@@ -9,7 +9,7 @@ class SensorController:
         GPIO.setwarnings(False)
         if not GPIO.getmode():  # Vérifie si le mode est déjà défini
             GPIO.setmode(GPIO.BOARD)
-            
+
         self.SENSOR_LEFT = SENSOR_LEFT
         self.SENSOR_MIDDLE = SENSOR_MIDDLE
         self.SENSOR_RIGHT = SENSOR_RIGHT
@@ -45,8 +45,8 @@ class SensorController:
                         #     notify_flag_zone("EXIT_FLAG_AREA")
                     previous_states = current_states
                 time.sleep(0.5)
-        finally:
-            GPIO.cleanup()
+        # finally:
+        #     GPIO.cleanup()
     
     def stop(self):
         self.running = False
