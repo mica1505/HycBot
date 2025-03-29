@@ -47,8 +47,8 @@ class Telecommande:
         self.sensor_thread.start()
 
         # Start shot detector in a separate thread
-        #self.shot_detector_thread = threading.Thread(target=self.shot_detector.detect_shot, daemon=True)
-        #self.shot_detector_thread.start()
+        self.shot_detector_thread = threading.Thread(target=self.shot_detector.detect_shot, daemon=True)
+        self.shot_detector_thread.start()
 
         # Start camera capture in a separate thread
         self.camera_thread = threading.Thread(target=self.camera.capture_frames, daemon=True)

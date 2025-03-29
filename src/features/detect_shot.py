@@ -6,6 +6,10 @@ from src.features.global_variables import IR_RECEIVER
 class ShotDetector:
 
     def __init__(self):
+        GPIO.setwarnings(False)
+        if not GPIO.getmode():  # Vérifie si le mode est déjà défini
+            GPIO.setmode(GPIO.BOARD)
+            
         GPIO.setup(IR_RECEIVER, GPIO.IN)
         self.shot_detected = None
 

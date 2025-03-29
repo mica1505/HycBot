@@ -6,6 +6,10 @@ from src.features.global_variables import SENSOR_LEFT, SENSOR_MIDDLE, SENSOR_RIG
 
 class SensorController:
     def __init__(self):
+        GPIO.setwarnings(False)
+        if not GPIO.getmode():  # Vérifie si le mode est déjà défini
+            GPIO.setmode(GPIO.BOARD)
+            
         self.SENSOR_LEFT = SENSOR_LEFT
         self.SENSOR_MIDDLE = SENSOR_MIDDLE
         self.SENSOR_RIGHT = SENSOR_RIGHT
