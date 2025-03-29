@@ -45,6 +45,9 @@ class SensorController:
                         #     notify_flag_zone("EXIT_FLAG_AREA")
                     previous_states = current_states
                 time.sleep(0.5)
+        except Exception as e:
+            print("Error in sensor detection:", e)
+    
         # finally:
         #     GPIO.cleanup()
     
