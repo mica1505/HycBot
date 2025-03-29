@@ -12,3 +12,6 @@ ip:8000/video_feed
 
 
 sudo python -m src.features.
+
+
+mosquitto_sub -h 192.168.0.125 -t "tanks/242606374105615/shots" topic
