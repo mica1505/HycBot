@@ -5,12 +5,10 @@ import threading
 import os
 import sys
 
-from src.server.constantes import BROKER
+#blueTeamQRCode = "0x4d61792074686520666f726365206265207769746820796f7521"
+#redTeamQRCode = "0x596f7520646f6e2774206b6e6f772074686520706f776572206f6620746865206461726b207369646521"
 
-blueTeamQRCode = "0x4d61792074686520666f726365206265207769746820796f7521"
-redTeamQRCode = "0x596f7520646f6e2774206b6e6f772074686520706f776572206f6620746865206461726b207369646521"
-
-qr_codes = {"RED": redTeamQRCode, "BLUE": blueTeamQRCode}
+qr_codes = {"RED": "Hello_World", "BLUE": "Hello_World"}
 weapons = {"0xf1": "Laser Gun"}
 
 def assignToTeam(id):
@@ -55,87 +53,83 @@ def giveFlag(id, topic):
 def processData(client, userdata, message):
     global flag
     querry = str(message.payload.decode("utf-8")).split(" ")
-    #print('-----------------------',message.topic[21:])
-    #print(message.topic)
 
     if message.topic == "init":
         if querry[0] == "INIT":
             if initPhase:
                 assignToTeam(querry[1])
             else:
-                client.publish("tanks/"+querry[1]+"/init", "GAME_ALREADY_STARTED")
+                client.publish(f"tanks/{querry[1]}/init", "GAME_ALREADY_STARTED")
     else:
-        participant_id = message.topic[6:21]# [6:20]
+        # Split topic into parts and extract components
+        topic_parts = message.topic.split('/')
+        participant_id = topic_parts[1]  # Second element is always the ID
+        subtopic = topic_parts[2] if len(topic_parts) > 2 else ''  # Third element is the subtopic
+
         if participant_id in participants.keys():
-            if message.topic[22:] == "flag": #[22:]
+            if subtopic == "flag":
                 if querry[0] == "ENTER_FLAG_AREA":
                     if not any(participants[p]["flag"] for p in participants.keys()):
                         client.publish(message.topic, "START_CATCHING")
-                        print(participant_id + " start catching the flag")
+                        print(f"{participant_id} start catching the flag")
                         participants[participant_id]["catching"] = True
                         threading.Thread(target=giveFlag, args=[participant_id, message.topic]).start()
                     elif participants[participant_id]["flag"]:
                         client.publish(message.topic, "ALREADY_GOT")
-                        print(participant_id + " has already the flag")
+                        print(f"{participant_id} has already the flag")
                     else:
                         client.publish(message.topic, "NOT_ONBASE")
-                        print("Hey " + participant_id + ", there is no flag here anymore")
+                        print(f"Hey {participant_id}, there is no flag here anymore")
 
                 elif querry[0] == "EXIT_FLAG_AREA":
                     if participants[participant_id]["catching"]:
                         client.publish(message.topic, "ABORT_CATCHING_EXIT")
-                        print(participant_id + " abort catching the flag, you exited the flag area")
+                        print(f"{participant_id} abort catching the flag, you exited the flag area")
                         participants[participant_id]["catching"] = False
-            elif message.topic[22:] == "shots": #[21:]
-                print(querry[0])
+
+            elif subtopic == "shots":
                 if querry[0] == "SHOT_BY":
                     shot = querry[1][:4]
                     shooter = "0x" + querry[1][4:]
-                    #print(shooter)
-                    #print( participants.keys())
                     if shooter in participants.keys():
                         if participants[participant_id]["color"] != participants[shooter]["color"]:
-                            client.publish(message.topic+"/in", "SHOT")
-                            client.publish("tanks/"+shooter+"/shots/out", "SHOT")
-                            print(participant_id + " shot by " + shooter + " with " + weapons[shot])
+                            client.publish(f"{message.topic}/in", "SHOT")
+                            client.publish(f"tanks/{shooter}/shots/out", "SHOT")
+                            print(f"{participant_id} shot by {shooter} with {weapons[shot]}")
 
                             # Flag check
                             if participants[participant_id]["catching"]:
-                                client.publish("tanks/"+participant_id+"/flag", "ABORT_CATCHING_SHOT")
-                                print(participant_id + " abort catching the flag, you got shot")
+                                client.publish(f"tanks/{participant_id}/flag", "ABORT_CATCHING_SHOT")
+                                print(f"{participant_id} abort catching the flag, you got shot")
                                 participants[participant_id]["catching"] = False
                             if participants[participant_id]["flag"]:
-                                client.publish("tanks/"+participant_id+"/flag", "FLAG_LOST")
-                                print(participant_id + " you lost the flag")
+                                client.publish(f"tanks/{participant_id}/flag", "FLAG_LOST")
+                                print(f"{participant_id} you lost the flag")
                                 participants[participant_id]["flag"] = False
                         else:
                             if participant_id != shooter:
-                                client.publish("tanks/"+shooter+"/shots/out", "FRIENDLY_FIRE")
-                                print("Carefull " + shooter + ", friendly fire")
+                                client.publish(f"tanks/{shooter}/shots/out", "FRIENDLY_FIRE")
+                                print(f"Carefull {shooter}, friendly fire")
 
-            elif message.topic[22:] == "qr_code": #[21:]
+            elif subtopic == "qr_code":
                 if querry[0] == "QR_CODE":
                     qr = querry[1]
-                    #print(qr)
-                    #qr = "0x4d61792074686520666f726365206265207769746820796f7521" blue
                     if qr == qr_codes.get(participants[participant_id]["color"]):
                         client.publish(message.topic, "SCAN_SUCCESSFUL")
                         if participants[participant_id]["flag"]:
-                            client.publish("tanks/"+participant_id+"/flag", "FLAG_DEPOSITED")
+                            client.publish(f"tanks/{participant_id}/flag", "FLAG_DEPOSITED")
                             participants[participant_id]["flag"] = False
                             # Winner check
                             scores[participants[participant_id]["color"]] += 1
-                            print("RED :", scores["RED"], "// BLUE :", scores["BLUE"])
+                            print(f"RED : {scores['RED']} // BLUE : {scores['BLUE']}")
                             if scores[participants[participant_id]["color"]] == 1:
                                 for id in participants.keys():
-                                    client.publish("tanks/"+id+"/flag", "WIN "+participants[participant_id]["color"])
+                                    client.publish(f"tanks/{id}/flag", f"WIN {participants[participant_id]['color']}")
                         else:
-                            client.publish("tanks/"+participant_id+"/flag", "NO_FLAG")
-                            print(participant_id + ", there is not flat to deposit")
+                            client.publish(f"tanks/{participant_id}/flag", "NO_FLAG")
+                            print(f"{participant_id}, there is no flag to deposit")
                     else:
-                        # print("no")
                         client.publish(message.topic, "SCAN_FAILED")
-                        # client.publish("tanks/"+participant_id+"/init", "SCAN_FAILED") #faire attention  on z changer le code 
 
 
 def start_game():
@@ -158,7 +152,7 @@ if __name__ == "__main__":
     scores = {"RED":0, "BLUE":0}
 
     client = mqtt.Client()
-    client.connect(BROKER)
+    client.connect("192.168.0.100")
 
     client.subscribe("init")
     client.subscribe("tanks/+/flag")

@@ -35,7 +35,7 @@ class Telecommande:
 
         self.client = Client()
         time.sleep(5) #make sur all communication are done with the server befaure procedding  
-        # self.led_controller.enable_led() #TODO : it more paractical to loop until we are asigned a team instead os just sleep 
+        self.led_controller.enable_led() #TODO : it more paractical to loop until we are asigned a team instead os just sleep 
         self.led_controller.disable_led()
 
         #print("here_________",self.client.get_qr_code())
@@ -72,7 +72,7 @@ class Telecommande:
         BUFFER_SIZE = 1024
 
         # Assurez-vous que l'IP du Raspberry Pi correspond à celle utilisée dans le premier script
-        RASPBERRY_IP = "192.168.1.176"
+        RASPBERRY_IP = "192.168.0.133"
 
         # Initialisation du socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
