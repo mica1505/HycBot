@@ -23,6 +23,8 @@
 
 ## Librairies utilisées par fonctionnalité
 
+- L’implémentation de certaines fonctionnalités s’est faite sans recours à des bibliothèques externes. Nous avons utilisé les outils et interfaces disponibles par défaut sur Raspberry Pi (comme le contrôle GPIO ou l’accès direct à la caméra via Picamera2) et des modules standards comme threading, time ou socket.
+
 - **Contrôle des mouvements via clavier** :
   - Aucune bibliothèque spécifique n’est requise pour la lecture des touches clavier, les entrées sont traitées directement via les fonctionnalités natives de Python.
   - La bibliothèque `socket` a été utilisée dans une tentative d’intégration avec une manette (feature abandonnée en raison de problèmes matériels).
